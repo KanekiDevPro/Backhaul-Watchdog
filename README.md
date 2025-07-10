@@ -123,5 +123,5 @@ MIT — free to use, modify, and share.
 
 ## ✉️ Contact
 
-Developed by [YourNameHere]  
+Developed by [KanekiDevPro]  
 If you find it useful, ⭐ the repo or contribute!
