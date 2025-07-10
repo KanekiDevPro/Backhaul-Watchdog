@@ -2,18 +2,25 @@
 
 # This installer script sets up a backhaul-monitor for a given systemd service
 # It will:
-# 1. Prompt for the service name
+# 1. Accept service name as argument or prompt for it
 # 2. Create /usr/local/bin/backhaul-monitor.sh with the appropriate configuration
 # 3. Make it executable, create the log file, and set permissions
 # 4. Add a cron entry under root to run the monitor every 5 minutes
 
 # Ensure script runs as root
-test "$(id -u)" -eq 0 || { echo "This script must be run as root." >&2; exit 1; }
-
-read -p "Enter the full systemd service name (e.g. backhaul.service): " SERVICE_NAME
-if [[ -z "$SERVICE_NAME" ]]; then
-  echo "Service name cannot be empty." >&2
+if [[ "$(id -u)" -ne 0 ]]; then
+  echo "This script must be run as root." >&2
   exit 1
+fi
+
+# Accept service name as first argument or prompt
+SERVICE_NAME="${1:-}"
+if [[ -z "$SERVICE_NAME" ]]; then
+  read -p "Enter the full systemd service name (e.g. backhaul.service): " SERVICE_NAME
+  if [[ -z "$SERVICE_NAME" ]]; then
+    echo "Service name cannot be empty." >&2
+    exit 1
+  fi
 fi
 
 # Paths and variables
@@ -45,10 +52,15 @@ chmod 666 "$LOG_FILE"
 
 # Install cron job for root
 CRON_CMD="*/5 * * * * $MONITOR_SCRIPT"
-# Preserve existing root crontab and append if not present
-crontab -l 2>/dev/null | grep -F "$MONITOR_SCRIPT" >/dev/null || (
-    (crontab -l 2>/dev/null; echo "SHELL=/bin/bash"; echo "PATH=/usr/bin:/bin:/usr/sbin:/sbin"; echo "$CRON_CMD") | crontab -
-)
+
+if crontab -l 2>/dev/null | grep -Fq "$MONITOR_SCRIPT"; then
+  echo "Cron job for backhaul monitor already exists. Skipping cron installation."
+else
+  # Add cron job
+  (crontab -l 2>/dev/null; echo "SHELL=/bin/bash"; echo "PATH=/usr/bin:/bin:/usr/sbin:/sbin"; echo "$CRON_CMD") | crontab -
+  echo "Cron job installed to run every 5 minutes."
+fi
 
 echo "Setup complete!"
-echo "Monitor \"$SERVICE_NAME\" will run every 5 minutes. Check \"$LOG_FILE\" for entries."
+echo "Monitor \"$SERVICE_NAME\" will run every 5 minutes."
+echo "Check \"$LOG_FILE\" for monitoring logs."
