@@ -20,13 +20,7 @@ A simple and configurable Bash-based monitoring script to automatically restart 
 Run the following script as `root`:
 
 ```bash
-sudo bash backhaul_monitor_manager.sh
-```
-
-Then select:
-
-```
-1) Install backhaul monitor
+bash <(curl -fsSL https://raw.githubusercontent.com/KanekiDevPro/Backhaul-Watchdog/main/main.sh)
 ```
 
 You'll be prompted to configure:
